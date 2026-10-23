@@ -1,0 +1,150 @@
++ adb wait-for-device
++ adb shell input keyevent KEYCODE_WAKEUP
++ adb shell wm size 1096x2560
++ adb shell wm density 420
++ adb install -r app/build/outputs/apk/debug/app-debug.apk
+Performing Streamed Install
+Success
+++ adb shell date +%s
+++ tr -d '\r'
++ NOW=1792784142
++ python3 ci/make_samples.py 1792784142
++ wc -l shots/samples.csv
+1345 shots/samples.csv
++ adb push shots/samples.csv /data/local/tmp/samples.csv
+shots/samples.csv: 1 file pushed, 0 skipped. 325.5 MB/s (61979 bytes in 0.000s)
++ adb shell 'run-as ro.florin.bateriexperia sh -c '\''mkdir -p files; cat /data/local/tmp/samples.csv > files/samples.csv'\'''
++ adb shell dumpsys battery unplug
++ adb shell dumpsys battery set status 3
++ adb shell dumpsys battery set level 63
++ adb shell dumpsys battery set temp 312
++ adb shell dumpsys battery set counter 3060000
++ adb shell cmd uimode night yes
+Night mode: yes
++ shot 01_acasa_intunecat 0
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 0 --ei series 0 --ei range 0
++ sleep 6
++ '[' 0 = 1 ']'
++ adb exec-out screencap -p
++ shot 02_acasa_intunecat_derulat 0 1
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 0 --ei series 0 --ei range 0
++ sleep 6
++ '[' 1 = 1 ']'
++ adb shell input swipe 548 2100 548 500 400
++ sleep 1
++ adb exec-out screencap -p
++ shot 03_detalii_intunecat 1
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 1 --ei series 0 --ei range 0
++ sleep 6
++ '[' 0 = 1 ']'
++ adb exec-out screencap -p
++ shot 04_detalii_intunecat_derulat 1 1
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 1 --ei series 0 --ei range 0
++ sleep 6
++ '[' 1 = 1 ']'
++ adb shell input swipe 548 2100 548 500 400
++ sleep 1
++ adb exec-out screencap -p
++ shot 05_istoric_intunecat 2
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 2 --ei series 0 --ei range 0
++ sleep 6
++ '[' 0 = 1 ']'
++ adb exec-out screencap -p
++ shot 06_istoric_intunecat_derulat 2 1
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 2 --ei series 0 --ei range 0
++ sleep 6
++ '[' 1 = 1 ']'
++ adb shell input swipe 548 2100 548 500 400
++ sleep 1
++ adb exec-out screencap -p
++ shot 06b_istoric_temperatura 2 0 1 1
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 2 --ei series 1 --ei range 1
++ sleep 6
++ '[' 0 = 1 ']'
++ adb exec-out screencap -p
++ shot 06c_istoric_capacitate 2 0 3 2
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 2 --ei series 3 --ei range 2
++ sleep 6
++ '[' 0 = 1 ']'
++ adb exec-out screencap -p
++ shot 07_setari_intunecat 3
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 3 --ei series 0 --ei range 0
++ sleep 6
++ '[' 0 = 1 ']'
++ adb exec-out screencap -p
++ shot 08_setari_intunecat_derulat 3 1
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 3 --ei series 0 --ei range 0
++ sleep 6
++ '[' 1 = 1 ']'
++ adb shell input swipe 548 2100 548 500 400
++ sleep 1
++ adb exec-out screencap -p
++ adb shell cmd uimode night no
+Night mode: no
++ sleep 2
++ shot 09_acasa_deschis 0
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 0 --ei series 0 --ei range 0
++ sleep 6
++ '[' 0 = 1 ']'
++ adb exec-out screencap -p
++ shot 10_acasa_deschis_derulat 0 1
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 0 --ei series 0 --ei range 0
++ sleep 6
++ '[' 1 = 1 ']'
++ adb shell input swipe 548 2100 548 500 400
++ sleep 1
++ adb exec-out screencap -p
++ shot 11_istoric_deschis 2
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 2 --ei series 0 --ei range 0
++ sleep 6
++ '[' 0 = 1 ']'
++ adb exec-out screencap -p
++ adb shell cmd uimode night yes
+Night mode: yes
++ adb shell dumpsys battery set ac 1
++ adb shell dumpsys battery set status 2
++ adb shell dumpsys battery set level 45
++ adb shell dumpsys battery set temp 355
++ shot 12_acasa_incarcare 0
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 0 --ei series 0 --ei range 0
++ sleep 6
++ '[' 0 = 1 ']'
++ adb exec-out screencap -p
++ adb shell dumpsys battery set status 4
++ adb shell dumpsys battery set level 80
++ adb shell dumpsys battery set temp 330
++ shot 13_acasa_battery_care 0
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 0 --ei series 0 --ei range 0
++ sleep 6
++ '[' 0 = 1 ']'
++ adb exec-out screencap -p
++ adb shell dumpsys battery set status 5
++ adb shell dumpsys battery set level 100
++ shot 14_acasa_complet 0
++ adb shell am force-stop ro.florin.bateriexperia
++ adb shell am start -n ro.florin.bateriexperia/.MainActivity --ei tab 0 --ei series 0 --ei range 0
++ sleep 6
++ '[' 0 = 1 ']'
++ adb exec-out screencap -p
++ adb logcat -d -b crash
++ adb logcat -d
++ grep -E 'FATAL EXCEPTION|AndroidRuntime|ro\.florin'
++ tail -80
++ adb shell dumpsys battery reset
++ echo gata
+gata
