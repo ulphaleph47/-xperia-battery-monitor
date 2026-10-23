@@ -18,6 +18,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -94,7 +95,7 @@ class MainActivity : Activity() {
     private var lastReading: Reading? = null
     private val currentBuf = ArrayList<Double>()
 
-    private val seriesNames = listOf("Nivel", "Temperatură", "Tensiune", "Capacitate")
+    private val seriesNames = listOf("Nivel", "Temp.", "Tensiune", "Capacitate")
     private val rangeNames = listOf("24 de ore", "7 zile", "30 de zile")
     private val rangeHours = listOf(24L, 24L * 7, 24L * 30)
 
@@ -123,8 +124,17 @@ class MainActivity : Activity() {
         tab = intent?.getIntExtra("tab", -1)?.takeIf { it in 0..3 }
             ?: savedInstanceState?.getInt("tab", 0)
             ?: 0
+        series = intent?.getIntExtra("series", 0)?.takeIf { it in 0..3 } ?: 0
+        rangeIdx = intent?.getIntExtra("range", 0)?.takeIf { it in 0..2 } ?: 0
         buildUi()
         selectTab(tab)
+
+        // Pictogramele din bara de stare și din bara de navigare: închise pe tema deschisă, deschise pe cea închisă.
+        if (Build.VERSION.SDK_INT >= 30) {
+            val mask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or
+                WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+            window.insetsController?.setSystemBarsAppearance(if (nightMode) 0 else mask, mask)
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -502,14 +512,16 @@ class MainActivity : Activity() {
         val b = Button(this)
         b.text = label
         b.isAllCaps = false
-        b.textSize = 13f
+        b.textSize = 12f
+        b.maxLines = 1
+        b.setSingleLine(true)
         b.minWidth = 0
         b.minimumWidth = 0
         b.minHeight = 0
         b.minimumHeight = 0
         b.stateListAnimator = null
         b.setTextColor(pal.text)
-        b.setPadding(dp(10), dp(8), dp(10), dp(8))
+        b.setPadding(dp(4), dp(8), dp(4), dp(8))
         b.setOnClickListener { onClick() }
         styleChip(b, false)
         return b
@@ -593,7 +605,7 @@ class MainActivity : Activity() {
 
         val twoWeeksAgo = now - 14L * 24 * 3600_000L
         val caps = cachedSamples
-            .filter { it.ts >= twoWeeksAgo && it.level in 20..95 && !it.estCapMah.isNaN() }
+            .filter { it.ts >= twoWeeksAgo && it.level in 20..95 && capOk(it.estCapMah) }
             .map { it.estCapMah }
         medianCount = caps.size
         medianCap = Estimator.median(caps)
@@ -601,6 +613,13 @@ class MainActivity : Activity() {
     }
 
     private fun nominalMah(): Int = prefs.getInt("design_mah", 5000)
+
+    /** O capacitate estimată e luată în seamă doar dacă e apropiată de cea nominală (altfel contorul e nesigur). */
+    private fun capOk(cap: Float): Boolean {
+        if (cap.isNaN()) return false
+        val n = nominalMah()
+        return cap >= n * 0.5f && cap <= n * 1.5f
+    }
 
     private fun monthsInUse(r: Reading): Double? {
         val now = System.currentTimeMillis()
@@ -629,9 +648,10 @@ class MainActivity : Activity() {
     private fun render(r: Reading) {
         val now = System.currentTimeMillis()
         val nominal = nominalMah().toDouble()
+        val chargeOk = capOk(r.estCapMah)
         val capMah: Double = when {
             !medianCap.isNaN() -> medianCap.toDouble()
-            !r.estCapMah.isNaN() -> r.estCapMah.toDouble()
+            chargeOk -> r.estCapMah.toDouble()
             else -> nominal
         }
         val avgCurrentMa: Double? = if (currentBuf.isEmpty()) null else currentBuf.average()
@@ -639,7 +659,7 @@ class MainActivity : Activity() {
         val full = r.status == 5 || (r.level >= 100 && r.plugged != 0)
         val pluggedNotCharging = r.plugged != 0 && !charging && !full
         val levelPct = r.level.toDouble()
-        val currentPct = if (r.chargeUah > 0 && capMah > 0) {
+        val currentPct = if (chargeOk && capMah > 0) {
             Estimator.clamp(r.chargeUah / 1000.0 / capMah * 100.0, levelPct - 1.0, levelPct + 1.0)
         } else {
             levelPct
@@ -686,7 +706,7 @@ class MainActivity : Activity() {
                 timeCaption.text = "Timp rămas estimat"
                 val rate = Estimator.segmentRatePerHour(cachedSamples, now, false, currentPct, capMah)
                 val byHistory = Estimator.dischargeHoursLeft(currentPct, rate)
-                val remainingMah = if (r.chargeUah > 0) r.chargeUah / 1000.0 else capMah * levelPct / 100.0
+                val remainingMah = if (chargeOk) r.chargeUah / 1000.0 else capMah * levelPct / 100.0
                 val byCurrent = avgCurrentMa?.let { Estimator.hoursFromCurrent(remainingMah, it) }
                 if (byHistory != null) {
                     timeValue.text = Format.duration(byHistory)
@@ -739,7 +759,7 @@ class MainActivity : Activity() {
         // ---------------- durata de viață
         val health: Double? = when {
             !medianCap.isNaN() -> Estimator.healthPct(medianCap.toDouble(), nominal)
-            !r.estCapMah.isNaN() -> Estimator.healthPct(r.estCapMah.toDouble(), nominal)
+            chargeOk -> Estimator.healthPct(r.estCapMah.toDouble(), nominal)
             else -> null
         }
         if (health == null) {
@@ -794,8 +814,9 @@ class MainActivity : Activity() {
 
         val g2 = "Capacitate și sănătate"
         setRow(g2, "Capacitate nominală", "${nominalMah()} mAh")
-        setRow(g2, "Capacitate rămasă", if (r.chargeUah > 0) "${r.chargeUah / 1000} mAh" else "indisponibil")
-        setRow(g2, "Capacitate totală (acum)", if (r.estCapMah.isNaN()) "indisponibil" else "${r.estCapMah.roundToInt()} mAh")
+        val counterOk = capOk(r.estCapMah)
+        setRow(g2, "Capacitate rămasă", if (counterOk) "${r.chargeUah / 1000} mAh" else "indisponibil")
+        setRow(g2, "Capacitate totală (acum)", if (counterOk) "${r.estCapMah.roundToInt()} mAh" else "indisponibil")
         setRow(g2, "Capacitate totală (mediană)", if (medianCap.isNaN()) "se adună date" else "${medianCap.roundToInt()} mAh")
         setRow(
             g2, "Sănătate estimată",
@@ -826,10 +847,12 @@ class MainActivity : Activity() {
                 0 -> s.level.toFloat()
                 1 -> s.tempC
                 2 -> s.voltMv / 1000f
-                else -> if (s.level >= 20 && !s.estCapMah.isNaN()) s.estCapMah else null
+                else -> if (s.level >= 20 && capOk(s.estCapMah)) s.estCapMah else null
             }
             if (v != null) pts.add(Pair(s.ts, v))
         }
+        chart.fixedMin = if (series == 0) 0f else null
+        chart.fixedMax = if (series == 0) 100f else null
         chart.points = pts
         when (series) {
             0 -> { chart.lineColor = pal.accent; chart.decimals = 0; chartTitle.text = "Nivelul bateriei (%)" }

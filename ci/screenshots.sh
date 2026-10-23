@@ -20,9 +20,9 @@ wc -l "$OUT/samples.csv"
 adb push "$OUT/samples.csv" /data/local/tmp/samples.csv
 adb shell "run-as $PKG sh -c 'mkdir -p files; cat /data/local/tmp/samples.csv > files/samples.csv'"
 
-shot() { # nume tab [derulare]
+shot() { # nume tab [derulare] [serie] [interval]
   adb shell am force-stop $PKG
-  adb shell am start -n $PKG/.MainActivity --ei tab "$2" > /dev/null
+  adb shell am start -n $PKG/.MainActivity --ei tab "$2" --ei series "${4:-0}" --ei range "${5:-0}" > /dev/null
   sleep 6
   if [ "${3:-0}" = "1" ]; then
     adb shell input swipe 548 2100 548 500 400
@@ -45,6 +45,8 @@ shot 03_detalii_intunecat 1
 shot 04_detalii_intunecat_derulat 1 1
 shot 05_istoric_intunecat 2
 shot 06_istoric_intunecat_derulat 2 1
+shot 06b_istoric_temperatura 2 0 1 1
+shot 06c_istoric_capacitate 2 0 3 2
 shot 07_setari_intunecat 3
 shot 08_setari_intunecat_derulat 3 1
 

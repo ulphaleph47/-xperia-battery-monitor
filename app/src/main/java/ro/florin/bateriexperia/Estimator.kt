@@ -1,5 +1,6 @@
 package ro.florin.bateriexperia
 
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -19,8 +20,17 @@ object Estimator {
     /** Pragul sub care o baterie e considerată uzată (Sony indică peste 80% după 3 ani). */
     const val WEAR_LIMIT_PCT = 80.0
 
-    private fun pct(s: Sample, capMah: Double): Double =
-        if (s.chargeUah > 0 && capMah > 0) s.chargeUah / 1000.0 / capMah * 100.0 else s.level.toDouble()
+    /**
+     * Nivelul exact al unei măsurători, în procente. Se folosește contorul de încărcare doar dacă e în
+     * concordanță cu nivelul afișat de sistem; altfel (valori nerealiste) se folosește nivelul.
+     */
+    private fun pct(s: Sample, capMah: Double): Double {
+        if (s.chargeUah > 0 && capMah > 0) {
+            val fromCounter = s.chargeUah / 1000.0 / capMah * 100.0
+            if (abs(fromCounter - s.level) <= 8.0) return fromCounter
+        }
+        return s.level.toDouble()
+    }
 
     /**
      * Ritmul de variație al nivelului, în puncte procentuale pe oră, calculat din ultimul interval
@@ -137,7 +147,10 @@ object Estimator {
      * Luni rămase pe baza tendinței capacității măsurate în istoric (necesită cel puțin 25 de zile de date).
      */
     fun trendMonthsLeft(samples: List<Sample>, nominalMah: Double): Double? {
-        val pts = samples.filter { it.level in 20..95 && !it.estCapMah.isNaN() }
+        val pts = samples.filter {
+            val cap = it.estCapMah.toDouble()
+            it.level in 20..95 && !cap.isNaN() && cap >= nominalMah * 0.5 && cap <= nominalMah * 1.5
+        }
         if (pts.size < 50) return null
         val spanDays = (pts.last().ts - pts.first().ts) / 86_400_000.0
         if (spanDays < 25.0) return null

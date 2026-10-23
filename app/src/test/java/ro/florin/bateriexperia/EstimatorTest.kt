@@ -27,6 +27,16 @@ class EstimatorTest {
     }
 
     @Test
+    fun absurd_charge_counter_is_ignored() {
+        // contor de încărcare nerealist (15 mAh la 80%): se folosește nivelul, nu contorul
+        val samples = (0..8).map { i ->
+            s(now - 4 * hour + i * hour / 2, 100 - (i * 5 / 2.0).toInt(), 3, 0, chargeUah = 15_000L)
+        }
+        val rate = Estimator.segmentRatePerHour(samples, now, false, 80.0, 5000.0)
+        assertEquals(5.0, rate!!, 0.6)
+    }
+
+    @Test
     fun not_enough_data_gives_null() {
         val samples = listOf(s(now - 10 * 60_000L, 80, 3, 0))
         assertNull(Estimator.segmentRatePerHour(samples, now, false, 79.0, 5000.0))

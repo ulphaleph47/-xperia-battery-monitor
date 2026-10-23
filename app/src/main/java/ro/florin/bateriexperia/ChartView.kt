@@ -30,6 +30,18 @@ class ChartView(context: Context) : View(context) {
             invalidate()
         }
 
+    /** Limite fixe pentru axa verticală (de exemplu 0–100 pentru nivelul bateriei). Null = automat. */
+    var fixedMin: Float? = null
+        set(value) {
+            field = value
+            invalidate()
+        }
+    var fixedMax: Float? = null
+        set(value) {
+            field = value
+            invalidate()
+        }
+
     private val d = resources.displayMetrics.density
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -54,6 +66,21 @@ class ChartView(context: Context) : View(context) {
     }
     private val timeFormat = SimpleDateFormat("dd.MM HH:mm", Locale("ro", "RO"))
 
+    /** Pas "rotund" pentru axă (1, 2, 2,5, 5 sau 10 înmulțit cu o putere a lui 10). */
+    private fun niceStep(range: Float, ticks: Int): Float {
+        val raw = range / ticks
+        val mag = Math.pow(10.0, Math.floor(Math.log10(raw.toDouble())))
+        val norm = raw / mag
+        val s = when {
+            norm <= 1.0 -> 1.0
+            norm <= 2.0 -> 2.0
+            norm <= 2.5 -> 2.5
+            norm <= 5.0 -> 5.0
+            else -> 10.0
+        }
+        return (s * mag).toFloat()
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val w = width.toFloat()
@@ -71,25 +98,38 @@ class ChartView(context: Context) : View(context) {
         val top = 8f * d
         val bottom = h - 24f * d
 
-        var minV = points.minOf { it.second }
-        var maxV = points.maxOf { it.second }
-        if (maxV - minV < 0.001f) {
-            minV -= 1f
-            maxV += 1f
+        var dataMin = points.minOf { it.second }
+        var dataMax = points.maxOf { it.second }
+        if (dataMax - dataMin < 0.001f) {
+            dataMin -= 1f
+            dataMax += 1f
         }
-        val pad = (maxV - minV) * 0.08f
-        minV -= pad
-        maxV += pad
+
+        val minV: Float
+        val maxV: Float
+        val step: Float
+        val fMin = fixedMin
+        val fMax = fixedMax
+        if (fMin != null && fMax != null) {
+            minV = fMin
+            maxV = fMax
+            step = (fMax - fMin) / 4f
+        } else {
+            step = niceStep(dataMax - dataMin, 4)
+            minV = Math.floor((dataMin / step).toDouble()).toFloat() * step
+            maxV = Math.ceil((dataMax / step).toDouble()).toFloat() * step
+        }
+        val ticks = Math.round((maxV - minV) / step).coerceIn(1, 10)
 
         val t0 = points.first().first
         val t1 = points.last().first
         val dt = max(1L, t1 - t0).toFloat()
 
         textPaint.textAlign = Paint.Align.RIGHT
-        for (i in 0..4) {
-            val y = bottom - (bottom - top) * i / 4f
+        for (i in 0..ticks) {
+            val y = bottom - (bottom - top) * i / ticks.toFloat()
             canvas.drawLine(left, y, right, y, gridPaint)
-            val v = minV + (maxV - minV) * i / 4f
+            val v = minV + (maxV - minV) * i / ticks.toFloat()
             canvas.drawText(String.format(Locale("ro", "RO"), "%.${decimals}f", v), left - 4f * d, y + 4f * d, textPaint)
         }
 
