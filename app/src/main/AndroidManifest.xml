@@ -9,7 +9,7 @@
         android:icon="@drawable/ic_launcher"
         android:label="Monitor baterie"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+        android:theme="@style/AppTheme">
 
         <activity
             android:name=".MainActivity"

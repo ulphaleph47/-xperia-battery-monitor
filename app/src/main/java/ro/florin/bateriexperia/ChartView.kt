@@ -45,6 +45,13 @@ class ChartView(context: Context) : View(context) {
         textSize = 11f * d
     }
     private val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+
+    /** Culorile liniilor de ghidaj și ale textului, potrivite temei curente. */
+    fun applyColors(grid: Int, text: Int) {
+        gridPaint.color = grid
+        textPaint.color = text
+        invalidate()
+    }
     private val timeFormat = SimpleDateFormat("dd.MM HH:mm", Locale("ro", "RO"))
 
     override fun onDraw(canvas: Canvas) {
