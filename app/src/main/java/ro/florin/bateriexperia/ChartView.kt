@@ -134,7 +134,7 @@ class ChartView(context: Context) : View(context) {
         }
 
         // Dacă sunt foarte multe puncte, se desenează doar fiecare al n-lea.
-        val step = max(1, points.size / 1200)
+        val stride = max(1, points.size / 1200)
         val path = Path()
         var first = true
         var idx = 0
@@ -148,7 +148,7 @@ class ChartView(context: Context) : View(context) {
             } else {
                 path.lineTo(x, y)
             }
-            idx += step
+            idx += stride
         }
         linePaint.color = lineColor
         canvas.drawPath(path, linePaint)
