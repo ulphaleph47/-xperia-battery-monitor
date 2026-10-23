@@ -851,9 +851,10 @@ class MainActivity : Activity() {
             }
             if (v != null) pts.add(Pair(s.ts, v))
         }
+        val plotted: List<Pair<Long, Float>> = if (series == 3) smoothByBucket(pts, if (rangeIdx == 0) 3 * 3600_000L else 24 * 3600_000L) else pts
         chart.fixedMin = if (series == 0) 0f else null
         chart.fixedMax = if (series == 0) 100f else null
-        chart.points = pts
+        chart.points = plotted
         when (series) {
             0 -> { chart.lineColor = pal.accent; chart.decimals = 0; chartTitle.text = "Nivelul bateriei (%)" }
             1 -> { chart.lineColor = pal.warn; chart.decimals = 1; chartTitle.text = "Temperatura (°C)" }
@@ -884,6 +885,27 @@ class MainActivity : Activity() {
                 if (rate == null) "se adună date" else String.format(ro, "%.1f %%/oră (≈ %s autonomie)", rate, Format.duration(100.0 / rate))
             )
         }
+    }
+
+    /** Mediana valorilor pe intervale de timp egale, ca graficul capacității să arate tendința, nu zgomotul. */
+    private fun smoothByBucket(pts: List<Pair<Long, Float>>, bucketMs: Long): List<Pair<Long, Float>> {
+        if (pts.isEmpty()) return pts
+        val out = ArrayList<Pair<Long, Float>>()
+        var bucket = pts.first().first / bucketMs
+        var values = ArrayList<Float>()
+        var lastTs = pts.first().first
+        for (p in pts) {
+            val b = p.first / bucketMs
+            if (b != bucket) {
+                out.add(Pair(lastTs, Estimator.median(values)))
+                values = ArrayList()
+                bucket = b
+            }
+            values.add(p.second)
+            lastTs = p.first
+        }
+        out.add(Pair(lastTs, Estimator.median(values)))
+        return out
     }
 
     // ---------------------------------------------------------------- acțiuni

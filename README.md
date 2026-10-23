@@ -2,6 +2,15 @@
 
 Aplicație Android (Android 8.0 sau mai nou, testată ca țintă pe Android 15) care arată în timp real starea bateriei și păstrează un istoric cu grafice.
 
+## Ecranele aplicației
+
+- **Acasă:** nivelul bateriei, starea, timpul rămas estimat (sau timpul până la 100% la încărcare), temperatura, puterea, curentul, tensiunea și durata de viață estimată a bateriei.
+- **Detalii:** toate valorile citite de la sistem, grupate pe energie, capacitate și informații despre baterie.
+- **Istoric:** grafice pentru nivel, temperatură, tensiune și capacitate, pe 24 de ore, 7 zile sau 30 de zile, cu statistici.
+- **Setări:** capacitatea nominală (implicit 5000 mAh), luna achiziției, scurtături către setările bateriei și ștergerea istoricului.
+
+Interfața e în limba română și urmează tema deschisă sau închisă a telefonului.
+
 ## Ce afișează
 
 - nivel, stare de încărcare și sursă (AC, USB, wireless)
