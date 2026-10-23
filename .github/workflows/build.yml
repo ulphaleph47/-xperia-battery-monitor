@@ -24,7 +24,15 @@ jobs:
           gradle-version: 8.10.2
 
       - name: Compilează
-        run: gradle assembleRelease --no-daemon --stacktrace
+        run: |
+          set +e
+          gradle assembleRelease --no-daemon --stacktrace > build.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            msg=$( { grep -E '^e: |^w: .*error' build.log | head -25; sed -n '/What went wrong/,/^\* Try/p' build.log | head -25; } | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g' )
+            echo "::error title=Eroare la compilare::${msg}"
+          fi
+          exit $code
 
       - name: Pregătește fișierul APK
         run: cp app/build/outputs/apk/release/app-release.apk xperia-battery-monitor.apk
