@@ -71,10 +71,12 @@ object BatteryReader {
         var mfg = -1L
         var firstUse = -1L
         if (Build.VERSION.SDK_INT >= 34) {
-            soh = intProp(bm, BatteryManager.BATTERY_PROPERTY_STATE_OF_HEALTH)
-            policy = intProp(bm, BatteryManager.BATTERY_PROPERTY_CHARGING_POLICY)
-            mfg = longProp(bm, BatteryManager.BATTERY_PROPERTY_MANUFACTURING_DATE)
-            firstUse = longProp(bm, BatteryManager.BATTERY_PROPERTY_FIRST_USE_DATE)
+            // Identificatorii acestor proprietăți nu au constante publice în SDK,
+            // dar sistemul le citește dacă producătorul le oferă.
+            soh = safeInt(bm, PROP_STATE_OF_HEALTH)
+            policy = safeInt(bm, PROP_CHARGING_POLICY)
+            mfg = safeLong(bm, PROP_MANUFACTURING_DATE)
+            firstUse = safeLong(bm, PROP_FIRST_USE_DATE)
         }
 
         return Reading(
@@ -95,6 +97,25 @@ object BatteryReader {
             firstUseSec = firstUse
         )
     }
+
+    private const val PROP_MANUFACTURING_DATE = 7
+    private const val PROP_FIRST_USE_DATE = 8
+    private const val PROP_CHARGING_POLICY = 9
+    private const val PROP_STATE_OF_HEALTH = 10
+
+    private fun safeInt(bm: BatteryManager, id: Int): Int =
+        try {
+            intProp(bm, id)
+        } catch (e: Exception) {
+            -1
+        }
+
+    private fun safeLong(bm: BatteryManager, id: Int): Long =
+        try {
+            longProp(bm, id)
+        } catch (e: Exception) {
+            -1L
+        }
 
     private fun longProp(bm: BatteryManager, id: Int): Long {
         val v = bm.getLongProperty(id)
